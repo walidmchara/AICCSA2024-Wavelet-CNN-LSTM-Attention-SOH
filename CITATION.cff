@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: 'If you use this research code, please cite the associated conference paper.'
+title: 'CNN–WNN–WLSTM with Attention for Lithium-Ion Battery SOH Prediction'
+type: software
+authors:
+  - family-names: Mchara
+    given-names: Walid
+  - family-names: Khalfa
+    given-names: Mohamed Abdellatif
+  - family-names: Manai
+    given-names: Lazhar
+identifiers:
+  - type: doi
+    value: 10.1109/AICCSA63423.2024.10912566

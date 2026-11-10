@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+outputs/
+*.pt
+*.h5
+.ipynb_checkpoints/
+.DS_Store
+.env
+# Original experimental archives remain outside version control.
+data/raw/
+data/**/*.mat
+data/**/*.zip

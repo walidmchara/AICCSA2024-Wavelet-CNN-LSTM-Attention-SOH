@@ -1,0 +1,40 @@
+{
+  "paper": {
+    "title": "Improved Diagnosis of Lithium-Ion Battery Health in Electric Vehicles via a Hybrid Deep Learning Model Incorporating Wavelet Transform and Attention Mechanism",
+    "doi": "10.1109/AICCSA63423.2024.10912566",
+    "venue": "2024 IEEE/ACS 21st International Conference on Computer Systems and Applications"
+  },
+  "reported_architecture": {
+    "conv_filters": 64,
+    "conv_kernel": 3,
+    "conv_activation": "relu",
+    "pool_size": 2,
+    "dropout": 0.3,
+    "wnn_units": 300,
+    "wnn_activation": "Morlet: cos(1.75*x)*exp(-x*x/2)",
+    "wlstm_units": 100,
+    "attention_units": 100,
+    "attention_activation": "sigmoid",
+    "loss": "mean_squared_error"
+  },
+  "engineering_choices_not_fixed_by_the_paper": {
+    "lookback_cycles": 16,
+    "validation_fraction": 0.2,
+    "batch_size": 32,
+    "epochs": 30,
+    "learning_rate": 0.001,
+    "seed": 42,
+    "nominal_capacity_ah": 2.0,
+    "target_mode": "nominal",
+    "wlstm_cell_state_update": "standard LSTM update with Morlet input/forget/output/candidate gates",
+    "attention_normalization": "normalized sigmoid weights over sequence time"
+  },
+  "features": [
+    "voltage_mean", "voltage_std", "current_mean", "current_std",
+    "temperature_mean", "discharge_duration_s", "ambient_temperature"
+  ],
+  "experiments": {
+    "24C": {"train_cells": ["B0005", "B0006", "B0007"], "test_cell": "B0018"},
+    "43C": {"train_cells": ["B0029", "B0031", "B0032"], "test_cell": "B0030"}
+  }
+}
