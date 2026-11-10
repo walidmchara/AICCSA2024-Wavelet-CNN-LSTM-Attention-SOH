@@ -37,7 +37,7 @@ def load_cell(path: Path, features: list[str], target_mode='nominal', nominal_ah
         target = cap / cap[0]
     else:
         raise ValueError('Unsupported SOH target definition')
-    x = df[features].apply(pd.to_numeric, errors='coerce').to_numpy(dtype=np.float64)
+    x = df[features].apply(pd.to_numeric, errors='coerce').to_numpy(dtype=np.float64, copy=True)
     x[~np.isfinite(x)] = np.nan
     return x, target.astype(np.float32), df['cycle'].to_numpy(), cap[0]
 
