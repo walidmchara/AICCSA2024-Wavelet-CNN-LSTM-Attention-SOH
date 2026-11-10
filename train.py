@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / 'src'))
 from aiccsa_soh.data import build_split
 from aiccsa_soh.model import BatterySOH
 from aiccsa_soh.metrics import evaluate
+from training_recovery import EpochCheckpoint
 
 
 def run(args):
@@ -41,8 +42,19 @@ def run(args):
     if epochs<1: raise ValueError('Epochs must be positive')
     optim=torch.optim.Adam(model.parameters(),lr=opts['learning_rate'])
     train=DataLoader(TensorDataset(*ds.train),batch_size=opts['batch_size'],shuffle=True)
-    history=[];best=float('inf');best_state=None
-    for epoch in range(epochs):
+    data_files = sorted(Path(args.data_dir).rglob("*.csv"))
+    recovery = EpochCheckpoint(args.checkpoint_dir or args.out / "recovery", {
+        "cfg":cfg,"group":args.group,"model":args.model,"epochs":epochs,
+        "smoke":args.smoke,"data":[(p.as_posix(),p.stat().st_size) for p in data_files],
+    })
+    stateful={"model":model,"optimizer":optim}
+    history=[];best=float('inf');best_state=None;start_epoch=0
+    if args.resume:
+        restored=recovery.restore(stateful,device="cpu")
+        start_epoch=restored["epoch"];best=restored["best"]
+        best_state=restored["best_state"];history=restored["history"]
+        print(f"Resumed at completed epoch {start_epoch}")
+    for epoch in range(start_epoch,epochs):
         model.train();tot=0;n=0
         for x,y in train:
             optim.zero_grad()
@@ -54,7 +66,9 @@ def run(args):
         with torch.no_grad():v=float((model(ds.val[0])-ds.val[1]).square().mean())
         if v<best:best=v;best_state=copy.deepcopy(model.state_dict())
         history.append({'epoch':epoch+1,'training_mse':tot/max(n,1),'validation_mse':v})
+        recovery.save(epoch+1,stateful,{"best":best,"best_state":best_state,"history":history})
         print(f'{args.group} | {args.model} | epoch {epoch+1}/{epochs} | validation MSE={v:.6f}')
+    if best_state is None: raise RuntimeError("No validation checkpoint")
     model.load_state_dict(best_state);model.eval()
     with torch.no_grad():pred=model(ds.test[0]).cpu().numpy()
     truth=ds.test[1].cpu().numpy()
@@ -81,6 +95,8 @@ def main():
     ap.add_argument('--group',choices=['24C','43C'],default='24C')
     ap.add_argument('--model',choices=['AM-CNN-WNN-WLSTM','CNN-LSTM','CNN','LSTM'],default='AM-CNN-WNN-WLSTM')
     ap.add_argument('--epochs',type=int)
+    ap.add_argument('--checkpoint-dir',type=Path,help='Persistent recovery folder')
+    ap.add_argument('--resume',action='store_true')
     ap.add_argument('--smoke',action='store_true')
     ap.add_argument('--out',type=Path,default=ROOT/'outputs/latest')
     args=ap.parse_args()
